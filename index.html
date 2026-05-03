@@ -8,6 +8,9 @@
     body { font-family: system-ui, sans-serif; max-width: 720px; margin: 3rem auto; padding: 1rem; }
     h1 { margin: 0 0 1rem; }
     textarea { width: 100%; min-height: 240px; padding: 0.75rem; font: inherit; box-sizing: border-box; }
+    #reader { white-space: pre-wrap; line-height: 1.7; padding: 0.75rem; border: 1px solid #ccc; min-height: 240px; }
+    #reader .word.current { background: yellow; }
+    [hidden] { display: none !important; }
     .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
     button, select { padding: 0.5rem; font: inherit; cursor: pointer; }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -17,6 +20,7 @@
 <body>
   <h1>listen.</h1>
   <textarea id="t" placeholder="paste here"></textarea>
+  <div id="reader" hidden></div>
   <div class="row">
     <button id="play">play</button>
     <button id="pause" disabled>pause</button>
@@ -29,6 +33,8 @@
     </label>
   </div>
   <script>
+    const t = document.getElementById('t');
+    const reader = document.getElementById('reader');
     const voiceEl = document.getElementById('voice');
     const rate = document.getElementById('rate');
     const rd = document.getElementById('rd');
@@ -36,6 +42,8 @@
     const pause = document.getElementById('pause');
     const stop = document.getElementById('stop');
     let voices = [];
+    let wordSpans = [];
+    let currentIdx = -1;
 
     function loadVoices() {
       voices = speechSynthesis.getVoices();
@@ -43,35 +51,64 @@
         .map((v, i) => `<option value="${i}">${v.name} (${v.lang})</option>`)
         .join('');
     }
-
     loadVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
 
     rate.oninput = () => { rd.textContent = parseFloat(rate.value).toFixed(1) + '×'; };
 
+    function buildReader(text) {
+      reader.innerHTML = '';
+      wordSpans = [];
+      const tokens = text.split(/(\s+)/);
+      for (const tok of tokens) {
+        if (!tok) continue;
+        if (/^\s+$/.test(tok)) {
+          reader.appendChild(document.createTextNode(tok));
+        } else {
+          const s = document.createElement('span');
+          s.className = 'word';
+          s.textContent = tok;
+          wordSpans.push(s);
+          reader.appendChild(s);
+        }
+      }
+    }
+
+    function highlight(idx) {
+      if (currentIdx >= 0 && wordSpans[currentIdx]) wordSpans[currentIdx].classList.remove('current');
+      currentIdx = idx;
+      if (wordSpans[idx]) wordSpans[idx].classList.add('current');
+    }
+
     function setState(s) {
-      if (s === 'idle')    { play.disabled = false; play.textContent = 'play';   pause.disabled = true;  stop.disabled = true;  }
-      if (s === 'playing') { play.disabled = true;  play.textContent = 'play';   pause.disabled = false; stop.disabled = false; }
+      if (s === 'idle')    { play.disabled = false; play.textContent = 'play';   pause.disabled = true;  stop.disabled = true;  t.hidden = false; reader.hidden = true;  }
+      if (s === 'playing') { play.disabled = true;  play.textContent = 'play';   pause.disabled = false; stop.disabled = false; t.hidden = true;  reader.hidden = false; }
       if (s === 'paused')  { play.disabled = false; play.textContent = 'resume'; pause.disabled = true;  stop.disabled = false; }
     }
 
     play.onclick = () => {
-      if (speechSynthesis.paused) {
-        speechSynthesis.resume();
-        setState('playing');
-        return;
-      }
-      const u = new SpeechSynthesisUtterance(document.getElementById('t').value);
+      if (speechSynthesis.paused) { speechSynthesis.resume(); setState('playing'); return; }
+      const text = t.value;
+      if (!text.trim()) return;
+      buildReader(text);
+      const u = new SpeechSynthesisUtterance(text);
       const v = voices[voiceEl.value];
       if (v) u.voice = v;
       u.rate = parseFloat(rate.value);
-      u.onend = () => setState('idle');
+      u.onboundary = (e) => {
+        if (e.name !== 'word') return;
+        // count words ending before charIndex
+        const before = text.slice(0, e.charIndex);
+        const wordsBefore = (before.match(/\S+/g) || []).length;
+        highlight(wordsBefore);
+      };
+      u.onend = () => { highlight(-1); setState('idle'); };
       speechSynthesis.speak(u);
       setState('playing');
     };
 
     pause.onclick = () => { speechSynthesis.pause(); setState('paused'); };
-    stop.onclick  = () => { speechSynthesis.cancel(); setState('idle'); };
+    stop.onclick  = () => { speechSynthesis.cancel(); highlight(-1); setState('idle'); };
   </script>
 </body>
 </html>
