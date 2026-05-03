@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>listen.</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 3rem auto; padding: 1rem; }
+    h1 { margin: 0 0 1rem; }
+    textarea { width: 100%; min-height: 240px; padding: 0.75rem; font: inherit; box-sizing: border-box; }
+    button { padding: 0.5rem 1rem; margin-top: 0.5rem; font: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>listen.</h1>
+  <textarea id="t" placeholder="paste here"></textarea>
+  <button id="speak">speak</button>
+  <script>
+    document.getElementById('speak').onclick = () => {
+      const u = new SpeechSynthesisUtterance(document.getElementById('t').value);
+      speechSynthesis.speak(u);
+    };
+  </script>
+</body>
+</html>
