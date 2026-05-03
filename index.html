@@ -47,16 +47,43 @@
     let wordSpans = [];
     let currentIdx = -1;
     let fullText = '';
-    let wordOffsets = [];  // char offset of each word in fullText
+    let wordOffsets = [];
+
+    // rank voices by how natural they sound. premium/enhanced first, then
+    // network-backed (google/microsoft natural), then everything else.
+    function rank(v) {
+      const n = v.name.toLowerCase();
+      if (/(premium|enhanced)/.test(n)) return 0;
+      if (/(natural|neural|google|siri)/.test(n)) return 1;
+      if (v.localService) return 2;
+      return 3;
+    }
+
+    function tag(v) {
+      const r = rank(v);
+      if (r === 0) return '★ ';
+      if (r === 1) return '◆ ';
+      return '';
+    }
 
     function loadVoices() {
-      voices = speechSynthesis.getVoices();
+      voices = speechSynthesis.getVoices().slice();
+      voices.sort((a, b) => {
+        const aEn = a.lang.startsWith('en') ? 0 : 1;
+        const bEn = b.lang.startsWith('en') ? 0 : 1;
+        if (aEn !== bEn) return aEn - bEn;
+        const ra = rank(a), rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        return a.name.localeCompare(b.name);
+      });
       voiceEl.innerHTML = voices
-        .map((v, i) => `<option value="${i}">${v.name} (${v.lang})</option>`)
+        .map((v, i) => `<option value="${i}">${tag(v)}${v.name} (${v.lang})</option>`)
         .join('');
     }
     loadVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
+    // chrome's onvoiceschanged is sometimes flaky, nudge it
+    setTimeout(loadVoices, 200);
 
     rate.oninput = () => { rd.textContent = parseFloat(rate.value).toFixed(1) + '×'; };
 
