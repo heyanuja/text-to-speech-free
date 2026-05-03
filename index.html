@@ -9,7 +9,8 @@
     h1 { margin: 0 0 1rem; }
     textarea { width: 100%; min-height: 240px; padding: 0.75rem; font: inherit; box-sizing: border-box; }
     #reader { white-space: pre-wrap; line-height: 1.7; padding: 0.75rem; border: 1px solid #ccc; min-height: 240px; }
-    #reader .word { scroll-margin-top: 40vh; scroll-margin-bottom: 40vh; }
+    #reader .word { scroll-margin-top: 40vh; scroll-margin-bottom: 40vh; cursor: pointer; }
+    #reader .word:hover { background: #eee; }
     #reader .word.current { background: yellow; }
     [hidden] { display: none !important; }
     .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
@@ -45,6 +46,8 @@
     let voices = [];
     let wordSpans = [];
     let currentIdx = -1;
+    let fullText = '';
+    let wordOffsets = [];  // char offset of each word in fullText
 
     function loadVoices() {
       voices = speechSynthesis.getVoices();
@@ -60,18 +63,24 @@
     function buildReader(text) {
       reader.innerHTML = '';
       wordSpans = [];
+      wordOffsets = [];
+      let pos = 0;
       const tokens = text.split(/(\s+)/);
       for (const tok of tokens) {
         if (!tok) continue;
         if (/^\s+$/.test(tok)) {
           reader.appendChild(document.createTextNode(tok));
         } else {
+          const idx = wordSpans.length;
           const s = document.createElement('span');
           s.className = 'word';
           s.textContent = tok;
+          s.onclick = () => speakFrom(idx);
           wordSpans.push(s);
+          wordOffsets.push(pos);
           reader.appendChild(s);
         }
+        pos += tok.length;
       }
     }
 
@@ -90,24 +99,31 @@
       if (s === 'paused')  { play.disabled = false; play.textContent = 'resume'; pause.disabled = true;  stop.disabled = false; }
     }
 
-    play.onclick = () => {
-      if (speechSynthesis.paused) { speechSynthesis.resume(); setState('playing'); return; }
-      const text = t.value;
-      if (!text.trim()) return;
-      buildReader(text);
-      const u = new SpeechSynthesisUtterance(text);
+    function speakFrom(wordIdx) {
+      speechSynthesis.cancel();
+      const startOffset = wordOffsets[wordIdx] || 0;
+      const slice = fullText.slice(startOffset);
+      const u = new SpeechSynthesisUtterance(slice);
       const v = voices[voiceEl.value];
       if (v) u.voice = v;
       u.rate = parseFloat(rate.value);
       u.onboundary = (e) => {
         if (e.name !== 'word') return;
-        const before = text.slice(0, e.charIndex);
+        const before = slice.slice(0, e.charIndex);
         const wordsBefore = (before.match(/\S+/g) || []).length;
-        highlight(wordsBefore);
+        highlight(wordIdx + wordsBefore);
       };
       u.onend = () => { highlight(-1); setState('idle'); };
       speechSynthesis.speak(u);
       setState('playing');
+    }
+
+    play.onclick = () => {
+      if (speechSynthesis.paused) { speechSynthesis.resume(); setState('playing'); return; }
+      fullText = t.value;
+      if (!fullText.trim()) return;
+      buildReader(fullText);
+      speakFrom(0);
     };
 
     pause.onclick = () => { speechSynthesis.pause(); setState('paused'); };
