@@ -77,7 +77,7 @@
     function highlight(idx) {
       if (currentIdx >= 0 && wordSpans[currentIdx]) wordSpans[currentIdx].classList.remove('current');
       currentIdx = idx;
-      if (wordSpans[idx]) wordSpans[idx].classList.add('current');
+      if (wordSpans[idx]) { wordSpans[idx].classList.add("current"); wordSpans[idx].scrollIntoView({ block: "start" }); }
     }
 
     function setState(s) {
