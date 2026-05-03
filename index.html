@@ -8,16 +8,35 @@
     body { font-family: system-ui, sans-serif; max-width: 720px; margin: 3rem auto; padding: 1rem; }
     h1 { margin: 0 0 1rem; }
     textarea { width: 100%; min-height: 240px; padding: 0.75rem; font: inherit; box-sizing: border-box; }
-    button { padding: 0.5rem 1rem; margin-top: 0.5rem; font: inherit; cursor: pointer; }
+    .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
+    button, select { padding: 0.5rem; font: inherit; cursor: pointer; }
   </style>
 </head>
 <body>
   <h1>listen.</h1>
   <textarea id="t" placeholder="paste here"></textarea>
-  <button id="speak">speak</button>
+  <div class="row">
+    <button id="speak">speak</button>
+    <select id="voice"></select>
+  </div>
   <script>
+    const voiceEl = document.getElementById('voice');
+    let voices = [];
+
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      voiceEl.innerHTML = voices
+        .map((v, i) => `<option value="${i}">${v.name} (${v.lang})</option>`)
+        .join('');
+    }
+
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+
     document.getElementById('speak').onclick = () => {
       const u = new SpeechSynthesisUtterance(document.getElementById('t').value);
+      const v = voices[voiceEl.value];
+      if (v) u.voice = v;
       speechSynthesis.speak(u);
     };
   </script>
