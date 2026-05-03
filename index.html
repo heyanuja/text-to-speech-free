@@ -10,6 +10,7 @@
     textarea { width: 100%; min-height: 240px; padding: 0.75rem; font: inherit; box-sizing: border-box; }
     .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
     button, select { padding: 0.5rem; font: inherit; cursor: pointer; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
     label { display: inline-flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; }
   </style>
 </head>
@@ -17,7 +18,9 @@
   <h1>listen.</h1>
   <textarea id="t" placeholder="paste here"></textarea>
   <div class="row">
-    <button id="speak">speak</button>
+    <button id="play">play</button>
+    <button id="pause" disabled>pause</button>
+    <button id="stop" disabled>stop</button>
     <select id="voice"></select>
     <label>
       speed
@@ -29,6 +32,9 @@
     const voiceEl = document.getElementById('voice');
     const rate = document.getElementById('rate');
     const rd = document.getElementById('rd');
+    const play = document.getElementById('play');
+    const pause = document.getElementById('pause');
+    const stop = document.getElementById('stop');
     let voices = [];
 
     function loadVoices() {
@@ -43,13 +49,29 @@
 
     rate.oninput = () => { rd.textContent = parseFloat(rate.value).toFixed(1) + '×'; };
 
-    document.getElementById('speak').onclick = () => {
+    function setState(s) {
+      if (s === 'idle')    { play.disabled = false; play.textContent = 'play';   pause.disabled = true;  stop.disabled = true;  }
+      if (s === 'playing') { play.disabled = true;  play.textContent = 'play';   pause.disabled = false; stop.disabled = false; }
+      if (s === 'paused')  { play.disabled = false; play.textContent = 'resume'; pause.disabled = true;  stop.disabled = false; }
+    }
+
+    play.onclick = () => {
+      if (speechSynthesis.paused) {
+        speechSynthesis.resume();
+        setState('playing');
+        return;
+      }
       const u = new SpeechSynthesisUtterance(document.getElementById('t').value);
       const v = voices[voiceEl.value];
       if (v) u.voice = v;
       u.rate = parseFloat(rate.value);
+      u.onend = () => setState('idle');
       speechSynthesis.speak(u);
+      setState('playing');
     };
+
+    pause.onclick = () => { speechSynthesis.pause(); setState('paused'); };
+    stop.onclick  = () => { speechSynthesis.cancel(); setState('idle'); };
   </script>
 </body>
 </html>
