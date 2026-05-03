@@ -9,6 +9,7 @@
     h1 { margin: 0 0 1rem; }
     textarea { width: 100%; min-height: 240px; padding: 0.75rem; font: inherit; box-sizing: border-box; }
     #reader { white-space: pre-wrap; line-height: 1.7; padding: 0.75rem; border: 1px solid #ccc; min-height: 240px; }
+    #reader .word { scroll-margin-top: 40vh; scroll-margin-bottom: 40vh; }
     #reader .word.current { background: yellow; }
     [hidden] { display: none !important; }
     .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
@@ -77,7 +78,10 @@
     function highlight(idx) {
       if (currentIdx >= 0 && wordSpans[currentIdx]) wordSpans[currentIdx].classList.remove('current');
       currentIdx = idx;
-      if (wordSpans[idx]) { wordSpans[idx].classList.add("current"); wordSpans[idx].scrollIntoView({ block: "start" }); }
+      if (wordSpans[idx]) {
+        wordSpans[idx].classList.add('current');
+        wordSpans[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
 
     function setState(s) {
@@ -97,7 +101,6 @@
       u.rate = parseFloat(rate.value);
       u.onboundary = (e) => {
         if (e.name !== 'word') return;
-        // count words ending before charIndex
         const before = text.slice(0, e.charIndex);
         const wordsBefore = (before.match(/\S+/g) || []).length;
         highlight(wordsBefore);
