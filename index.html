@@ -5,35 +5,160 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>listen.</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 3rem auto; padding: 1rem; }
-    h1 { margin: 0 0 1rem; }
-    textarea { width: 100%; min-height: 240px; padding: 0.75rem; font: inherit; box-sizing: border-box; }
-    #reader { white-space: pre-wrap; line-height: 1.7; padding: 0.75rem; border: 1px solid #ccc; min-height: 240px; }
-    #reader .word { scroll-margin-top: 40vh; scroll-margin-bottom: 40vh; cursor: pointer; }
-    #reader .word:hover { background: #eee; }
-    #reader .word.current { background: yellow; }
+    :root {
+      --cream: #f4ead4;
+      --cream-soft: #ece1c6;
+      --ink: #1a1612;
+      --ink-soft: #4a4036;
+      --oxblood: #6a1f1f;
+      --rule: rgba(26, 22, 18, 0.18);
+    }
+    * { box-sizing: border-box; }
+    html, body { background: var(--cream); }
+    body {
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 3.5rem 1.75rem 4rem;
+    }
+    header {
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.65rem;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+    header::after {
+      content: "";
+      display: block;
+      height: 1px;
+      background: var(--rule);
+      position: absolute;
+      left: 0; right: 0; bottom: -4px;
+    }
+    h1 {
+      font-family: "Didot", "Bodoni 72", "Bodoni Moda", Georgia, serif;
+      font-weight: 400;
+      font-size: 2.4rem;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    .tagline {
+      color: var(--ink-soft);
+      font-style: italic;
+      font-size: 0.95rem;
+      margin: 0.35rem 0 0;
+    }
+    textarea {
+      width: 100%;
+      min-height: 320px;
+      background: transparent;
+      border: 1px solid var(--rule);
+      padding: 1rem 1.1rem;
+      font: inherit;
+      color: var(--ink);
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--ink-soft); }
+    textarea::placeholder { color: var(--ink-soft); opacity: 0.6; font-style: italic; }
+    #reader {
+      white-space: pre-wrap;
+      line-height: 1.75;
+      font-size: 1.1rem;
+      min-height: 60vh;
+    }
+    #reader .word {
+      scroll-margin-top: 38vh;
+      scroll-margin-bottom: 38vh;
+      cursor: pointer;
+      padding: 1px 2px;
+      border-radius: 2px;
+      transition: background 80ms;
+    }
+    #reader .word:hover { background: rgba(106, 31, 31, 0.10); }
+    #reader .word.current {
+      background: var(--oxblood);
+      color: var(--cream);
+    }
     [hidden] { display: none !important; }
-    .row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
-    button, select { padding: 0.5rem; font: inherit; cursor: pointer; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    label { display: inline-flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; }
+    .controls {
+      display: flex;
+      gap: 0.55rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--rule);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.92rem;
+    }
+    button {
+      background: transparent;
+      border: 1px solid var(--ink);
+      color: var(--ink);
+      padding: 0.45rem 1.1rem;
+      font: inherit;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: background 100ms, color 100ms;
+    }
+    button:hover:not(:disabled) { background: var(--ink); color: var(--cream); }
+    button:disabled { opacity: 0.3; cursor: not-allowed; }
+    #play {
+      background: var(--oxblood);
+      border-color: var(--oxblood);
+      color: var(--cream);
+    }
+    #play:hover:not(:disabled) {
+      background: var(--ink);
+      border-color: var(--ink);
+    }
+    select {
+      background: transparent;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      padding: 0.4rem 0.55rem;
+      font: inherit;
+      max-width: 240px;
+    }
+    label {
+      display: inline-flex;
+      gap: 0.5rem;
+      align-items: center;
+      color: var(--ink-soft);
+    }
+    input[type="range"] {
+      width: 110px;
+      accent-color: var(--oxblood);
+    }
+    .rate-num { font-variant-numeric: tabular-nums; min-width: 2.4em; }
   </style>
 </head>
 <body>
-  <h1>listen.</h1>
-  <textarea id="t" placeholder="paste here"></textarea>
-  <div id="reader" hidden></div>
-  <div class="row">
-    <button id="play">play</button>
-    <button id="pause" disabled>pause</button>
-    <button id="stop" disabled>stop</button>
-    <select id="voice"></select>
-    <label>
-      speed
-      <input id="rate" type="range" min="0.5" max="2" step="0.1" value="1">
-      <span id="rd">1.0×</span>
-    </label>
-  </div>
+  <header>
+    <h1>listen.</h1>
+    <p class="tagline">paste — and absorb.</p>
+  </header>
+
+  <main>
+    <textarea id="t" placeholder="paste anything. an essay, a paper, a chapter you've been meaning to read…"></textarea>
+    <div id="reader" hidden></div>
+    <div class="controls">
+      <button id="play">play</button>
+      <button id="pause" disabled>pause</button>
+      <button id="stop" disabled>stop</button>
+      <select id="voice"></select>
+      <label>
+        speed
+        <input id="rate" type="range" min="0.5" max="2" step="0.1" value="1">
+        <span class="rate-num" id="rd">1.0×</span>
+      </label>
+    </div>
+  </main>
+
   <script>
     const t = document.getElementById('t');
     const reader = document.getElementById('reader');
@@ -49,8 +174,6 @@
     let fullText = '';
     let wordOffsets = [];
 
-    // rank voices by how natural they sound. premium/enhanced first, then
-    // network-backed (google/microsoft natural), then everything else.
     function rank(v) {
       const n = v.name.toLowerCase();
       if (/(premium|enhanced)/.test(n)) return 0;
@@ -58,7 +181,6 @@
       if (v.localService) return 2;
       return 3;
     }
-
     function tag(v) {
       const r = rank(v);
       if (r === 0) return '★ ';
@@ -82,7 +204,6 @@
     }
     loadVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
-    // chrome's onvoiceschanged is sometimes flaky, nudge it
     setTimeout(loadVoices, 200);
 
     rate.oninput = () => { rd.textContent = parseFloat(rate.value).toFixed(1) + '×'; };
@@ -154,16 +275,16 @@
     };
 
     pause.onclick = () => { speechSynthesis.pause(); setState('paused'); };
-    stop.onclick  = () => { speechSynthesis.cancel(); highlight(-1); setState("idle"); };
+    stop.onclick  = () => { speechSynthesis.cancel(); highlight(-1); setState('idle'); };
 
-    document.addEventListener("keydown", (e) => {
-      if (e.target.tagName === "TEXTAREA") return;
-      if (e.code === "Space") {
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'Space') {
         e.preventDefault();
         if (speechSynthesis.speaking && !speechSynthesis.paused) pause.click();
         else play.click();
       }
-      if (e.code === "Escape") { e.preventDefault(); stop.click(); }
+      if (e.code === 'Escape') { e.preventDefault(); stop.click(); }
     });
   </script>
 </body>
