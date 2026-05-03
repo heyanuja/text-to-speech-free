@@ -154,7 +154,17 @@
     };
 
     pause.onclick = () => { speechSynthesis.pause(); setState('paused'); };
-    stop.onclick  = () => { speechSynthesis.cancel(); highlight(-1); setState('idle'); };
+    stop.onclick  = () => { speechSynthesis.cancel(); highlight(-1); setState("idle"); };
+
+    document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "TEXTAREA") return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (speechSynthesis.speaking && !speechSynthesis.paused) pause.click();
+        else play.click();
+      }
+      if (e.code === "Escape") { e.preventDefault(); stop.click(); }
+    });
   </script>
 </body>
 </html>
