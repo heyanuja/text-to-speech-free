@@ -217,30 +217,36 @@
     let fullText = '';
     let wordOffsets = [];
 
-    // mac doesnt put the (premium)/(enhanced) qualifier in v.name — its in voiceURI like
-    // com.apple.voice.premium.en-US.Zoe. so check both.
+    // chrome on mac strips voice URIs to bare names ("Zoe") — no "premium" hint anywhere.
+    // workaround: these names only exist as premium/enhanced downloads on macos (no pre-installed
+    // compact counterpart), so their presence in getVoices() = user downloaded them.
+    const PREMIUM_NAMES = new Set([
+      'Ava', 'Allison', 'Susan', 'Joelle', 'Noelle', 'Serena', 'Stephanie',
+      'Matilda', 'Zoe', 'Lee', 'Eddy', 'Flo', 'Grandma', 'Grandpa', 'Jamie',
+      'Reed', 'Rocko', 'Sandy', 'Shelley',
+    ]);
+    const stripParens = s => s.replace(/\s*\([^)]*\)/g, '').trim();
     function quality(v) {
-      const u = (v.voiceURI || '').toLowerCase();
-      const n = v.name.toLowerCase();
-      if (/premium/.test(u)  || /premium/.test(n))  return 'premium';
-      if (/enhanced/.test(u) || /enhanced/.test(n)) return 'enhanced';
-      if (/(natural|neural|google|siri)/.test(n))   return 'network';
+      const base = stripParens(v.name);
+      if (PREMIUM_NAMES.has(base)) return 'premium';
+      // a "(English (United Kingdom))" suffix means the premium variant of a name that also
+      // has a compact version (e.g. Daniel) — apple only adds the language qualifier when
+      // disambiguating, which only happens for downloaded premium voices
+      if (/\([^)]*english[^)]*\)/i.test(v.name)) return 'premium';
+      if (/(natural|neural|google|siri)/i.test(v.name)) return 'network';
       return null;
     }
     function rank(v) {
       const q = quality(v);
       if (q === 'premium') return 0;
-      if (q === 'enhanced' || q === 'network') return 1;
+      if (q === 'network') return 1;
       if (v.localService) return 2;
       return 3;
     }
     function label(v) {
       const q = quality(v);
-      let pre = '', suf = '';
-      if (q === 'premium')       { pre = '★ '; if (!/premium/i.test(v.name))  suf = ' (premium)'; }
-      else if (q === 'enhanced') { pre = '◆ '; if (!/enhanced/i.test(v.name)) suf = ' (enhanced)'; }
-      else if (q === 'network')  { pre = '◆ '; }
-      return `${pre}${v.name} (${v.lang})${suf}`;
+      const pre = q === 'premium' ? '★ ' : q === 'network' ? '◆ ' : '';
+      return `${pre}${stripParens(v.name)} (${v.lang})`;
     }
 
     function loadVoices() {
