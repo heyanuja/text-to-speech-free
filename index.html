@@ -217,18 +217,30 @@
     let fullText = '';
     let wordOffsets = [];
 
-    function rank(v) {
+    // mac doesnt put the (premium)/(enhanced) qualifier in v.name — its in voiceURI like
+    // com.apple.voice.premium.en-US.Zoe. so check both.
+    function quality(v) {
+      const u = (v.voiceURI || '').toLowerCase();
       const n = v.name.toLowerCase();
-      if (/(premium|enhanced)/.test(n)) return 0;
-      if (/(natural|neural|google|siri)/.test(n)) return 1;
+      if (/premium/.test(u)  || /premium/.test(n))  return 'premium';
+      if (/enhanced/.test(u) || /enhanced/.test(n)) return 'enhanced';
+      if (/(natural|neural|google|siri)/.test(n))   return 'network';
+      return null;
+    }
+    function rank(v) {
+      const q = quality(v);
+      if (q === 'premium') return 0;
+      if (q === 'enhanced' || q === 'network') return 1;
       if (v.localService) return 2;
       return 3;
     }
-    function tag(v) {
-      const r = rank(v);
-      if (r === 0) return '★ ';
-      if (r === 1) return '◆ ';
-      return '';
+    function label(v) {
+      const q = quality(v);
+      let pre = '', suf = '';
+      if (q === 'premium')       { pre = '★ '; if (!/premium/i.test(v.name))  suf = ' (premium)'; }
+      else if (q === 'enhanced') { pre = '◆ '; if (!/enhanced/i.test(v.name)) suf = ' (enhanced)'; }
+      else if (q === 'network')  { pre = '◆ '; }
+      return `${pre}${v.name} (${v.lang})${suf}`;
     }
 
     function loadVoices() {
@@ -242,7 +254,7 @@
         return a.name.localeCompare(b.name);
       });
       voiceEl.innerHTML = voices
-        .map((v, i) => `<option value="${i}">${tag(v)}${v.name} (${v.lang})</option>`)
+        .map((v, i) => `<option value="${i}">${label(v)}</option>`)
         .join('');
     }
     loadVoices();
