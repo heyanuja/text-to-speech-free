@@ -9,7 +9,16 @@ go to : https://heyanuja.github.io/text-to-speech-free/
 
 otherwise: open `index.html` in chrome or safari, paste, pick a voice, hit play.
 
-on mac the **(premium)** voices sound much better than the defaults — `system settings → accessibility → spoken content → manage voices` and download whichever sounds least robotic. they show up in the dropdown next time you open the page.
+on mac, the **(premium)** and **(enhanced)** voices sound way more human than the default samantha. apple hid the menu in a weird place tho, so:
+
+1. `system settings → accessibility → spoken content`
+2. click the little **(i)** icon next to **system voice** — NOT the samantha dropdown. that dropdown just shows a short novelty list with no scroll, dont bother
+3. in the sheet that opens, click the **voice** row (the one that says samantha →)
+4. type "premium" or "enhanced" in the search bar
+5. click the cloud-download icon next to whichever voice. theyre big (~300mb–1gb each) but free
+6. reload this page and the new voices show up in the dropdown with ★ or ◆ next to them
+
+picks i like so far: **zoe** + **lee** (premium), **allison** (enhanced).
 
 ## keys
 
