@@ -272,10 +272,21 @@
       voiceEl.innerHTML = voices
         .map((v, i) => `<option value="${i}">${label(v)}</option>`)
         .join('');
+      // restore saved voice, else default to Zoe (premium, sounds great)
+      const saved = localStorage.getItem('voice');
+      let idx = saved ? voices.findIndex(v => v.name === saved) : -1;
+      if (idx < 0) idx = voices.findIndex(v => v.name === 'Zoe');
+      if (idx < 0) idx = 0;
+      voiceEl.value = String(idx);
     }
     loadVoices();
     speechSynthesis.onvoiceschanged = loadVoices;
     setTimeout(loadVoices, 200);
+
+    voiceEl.onchange = () => {
+      const v = voices[voiceEl.value];
+      if (v) localStorage.setItem('voice', v.name);
+    };
 
     rate.oninput = () => { rd.textContent = parseFloat(rate.value).toFixed(1) + '×'; };
     // web speech locks rate at speak-time, so on slider release: cancel + restart from the current word
