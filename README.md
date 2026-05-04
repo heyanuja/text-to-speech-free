@@ -15,7 +15,3 @@ on mac the **(premium)** voices sound much better than the defaults — `system 
 - `space` — play / pause
 - `esc` — stop
 - click any word to jump there
-
-## live
-
-[heyanuja.github.io/text-to-speech-free](https://heyanuja.github.io/text-to-speech-free)
