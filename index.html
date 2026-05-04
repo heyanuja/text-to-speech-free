@@ -250,6 +250,12 @@
     setTimeout(loadVoices, 200);
 
     rate.oninput = () => { rd.textContent = parseFloat(rate.value).toFixed(1) + '×'; };
+    // web speech locks rate at speak-time, so on slider release: cancel + restart from the current word
+    rate.onchange = () => {
+      if (speechSynthesis.speaking && !speechSynthesis.paused && currentIdx >= 0) {
+        speakFrom(currentIdx);
+      }
+    };
 
     function buildReader(text) {
       reader.innerHTML = '';
