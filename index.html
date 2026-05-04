@@ -105,9 +105,14 @@
       flex-wrap: wrap;
       margin-top: 1.5rem;
       padding-top: 1.5rem;
+      padding-bottom: 1rem;
       border-top: 1.5px dashed var(--ink);
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 0.92rem;
+      position: sticky;
+      bottom: 0;
+      background: var(--paper);
+      z-index: 10;
     }
 
     button {
@@ -216,6 +221,7 @@
     let currentIdx = -1;
     let fullText = '';
     let wordOffsets = [];
+    let suppressScrollUntil = 0;  // ms timestamp; auto-scroll stays off until then
 
     // chrome on mac strips voice URIs to bare names ("Zoe") — no "premium" hint anywhere.
     // workaround: these names only exist as premium/enhanced downloads on macos (no pre-installed
@@ -308,7 +314,9 @@
       currentIdx = idx;
       if (wordSpans[idx]) {
         wordSpans[idx].classList.add('current');
-        wordSpans[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (Date.now() >= suppressScrollUntil) {
+          wordSpans[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
     }
 
@@ -348,8 +356,14 @@
     pause.onclick = () => { speechSynthesis.pause(); setState('paused'); };
     stop.onclick  = () => { speechSynthesis.cancel(); highlight(-1); setState('idle'); };
 
+    // any user scroll input pauses auto-scroll for 4s, so the page doesnt yank you back
+    const markUserScroll = () => { suppressScrollUntil = Date.now() + 4000; };
+    window.addEventListener('wheel', markUserScroll, { passive: true });
+    window.addEventListener('touchmove', markUserScroll, { passive: true });
+
     document.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'TEXTAREA') return;
+      if (['PageUp','PageDown','ArrowUp','ArrowDown','Home','End'].includes(e.key)) markUserScroll();
       if (e.code === 'Space') {
         e.preventDefault();
         if (speechSynthesis.speaking && !speechSynthesis.paused) pause.click();
