@@ -1,6 +1,6 @@
 # text-to-speech-free
 
-paste text. it reads it back. that's all.
+paste text and it reads it back and thats about it
 
 speechify wanted money for, basically, a `<textarea>` and the web speech api, so.
 
