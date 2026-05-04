@@ -7,68 +7,94 @@
   <style>
     :root {
       --cream: #f4ead4;
-      --cream-soft: #ece1c6;
+      --paper: #ffffff;
       --ink: #1a1612;
-      --ink-soft: #4a4036;
       --oxblood: #6a1f1f;
       --rule: rgba(26, 22, 18, 0.18);
     }
     * { box-sizing: border-box; }
-    html, body { background: var(--cream); }
+    html, body { background: var(--cream); margin: 0; }
     body {
       color: var(--ink);
       font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
       font-size: 18px;
       line-height: 1.6;
+      padding: 4rem 1.5rem 5rem;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1.5px solid var(--ink);
       max-width: 720px;
       margin: 0 auto;
-      padding: 3.5rem 1.75rem 4rem;
-    }
-    header {
-      border-bottom: 1px solid var(--rule);
-      padding-bottom: 0.65rem;
-      margin-bottom: 2rem;
+      padding: 3.5rem 2.5rem 2.5rem;
       position: relative;
+      box-shadow: 6px 6px 0 var(--ink);
     }
-    header::after {
-      content: "";
-      display: block;
-      height: 1px;
-      background: var(--rule);
+
+    .ribbon {
+      background: var(--ink);
+      color: var(--paper);
+      display: inline-block;
+    }
+    h1.ribbon {
       position: absolute;
-      left: 0; right: 0; bottom: -4px;
-    }
-    h1 {
+      top: -1.4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.55rem 2.6rem;
       font-family: "Didot", "Bodoni 72", "Bodoni Moda", Georgia, serif;
+      font-style: italic;
       font-weight: 400;
-      font-size: 2.4rem;
-      letter-spacing: -0.01em;
+      font-size: 1.6rem;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
       margin: 0;
+      clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%);
     }
+    .ribbon-tag {
+      position: absolute;
+      top: 1.4rem;
+      right: -0.6rem;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.7rem;
+      padding: 0.32rem 0.85rem 0.32rem 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transform: rotate(3deg);
+      clip-path: polygon(8% 0, 100% 0, 100% 100%, 8% 100%, 0 50%);
+    }
+
     .tagline {
-      color: var(--ink-soft);
+      text-align: center;
+      color: var(--oxblood);
       font-style: italic;
       font-size: 0.95rem;
-      margin: 0.35rem 0 0;
+      margin: 0 0 2rem;
+      letter-spacing: 0.02em;
     }
+
     textarea {
       width: 100%;
-      min-height: 320px;
-      background: transparent;
-      border: 1px solid var(--rule);
+      min-height: 300px;
+      background: var(--paper);
+      border: 1.5px dashed var(--ink);
       padding: 1rem 1.1rem;
       font: inherit;
       color: var(--ink);
       resize: vertical;
       outline: none;
     }
-    textarea:focus { border-color: var(--ink-soft); }
-    textarea::placeholder { color: var(--ink-soft); opacity: 0.6; font-style: italic; }
+    textarea:focus { border-style: solid; }
+    textarea::placeholder { color: rgba(26, 22, 18, 0.4); font-style: italic; }
+
     #reader {
       white-space: pre-wrap;
       line-height: 1.75;
       font-size: 1.1rem;
       min-height: 60vh;
+      padding: 0.5rem 0;
     }
     #reader .word {
       scroll-margin-top: 38vh;
@@ -81,54 +107,71 @@
     #reader .word:hover { background: rgba(106, 31, 31, 0.10); }
     #reader .word.current {
       background: var(--oxblood);
-      color: var(--cream);
+      color: var(--paper);
     }
     [hidden] { display: none !important; }
+
     .controls {
       display: flex;
-      gap: 0.55rem;
+      gap: 0.7rem;
       align-items: center;
       flex-wrap: wrap;
       margin-top: 1.5rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid var(--rule);
+      padding-top: 1.5rem;
+      border-top: 1.5px dashed var(--ink);
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 0.92rem;
     }
+
     button {
-      background: transparent;
-      border: 1px solid var(--ink);
+      background: var(--paper);
+      border: 1.5px solid var(--ink);
       color: var(--ink);
       padding: 0.45rem 1.1rem;
       font: inherit;
       cursor: pointer;
       letter-spacing: 0.02em;
-      transition: background 100ms, color 100ms;
+      box-shadow: 3px 3px 0 var(--ink);
+      transition: transform 80ms, box-shadow 80ms, background 80ms;
     }
-    button:hover:not(:disabled) { background: var(--ink); color: var(--cream); }
-    button:disabled { opacity: 0.3; cursor: not-allowed; }
+    button:hover:not(:disabled) {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 var(--ink);
+      background: var(--cream);
+    }
+    button:active:not(:disabled) {
+      transform: translate(3px, 3px);
+      box-shadow: none;
+    }
+    button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: 1px 1px 0 var(--ink);
+    }
     #play {
       background: var(--oxblood);
-      border-color: var(--oxblood);
-      color: var(--cream);
+      color: var(--paper);
     }
     #play:hover:not(:disabled) {
       background: var(--ink);
-      border-color: var(--ink);
+      color: var(--paper);
     }
+
     select {
-      background: transparent;
-      border: 1px solid var(--rule);
+      background: var(--paper);
+      border: 1.5px solid var(--ink);
       color: var(--ink);
       padding: 0.4rem 0.55rem;
       font: inherit;
-      max-width: 240px;
+      max-width: 220px;
+      box-shadow: 3px 3px 0 var(--ink);
+      cursor: pointer;
     }
     label {
       display: inline-flex;
       gap: 0.5rem;
       align-items: center;
-      color: var(--ink-soft);
+      color: var(--ink);
     }
     input[type="range"] {
       width: 110px;
@@ -137,8 +180,10 @@
     .rate-num { font-variant-numeric: tabular-nums; min-width: 2.4em; }
 
     @media (max-width: 600px) {
-      body { padding: 2rem 1rem 3rem; font-size: 16px; }
-      h1 { font-size: 1.85rem; }
+      body { padding: 3rem 0.75rem 4rem; font-size: 16px; }
+      .card { padding: 3rem 1.25rem 1.5rem; box-shadow: 4px 4px 0 var(--ink); }
+      h1.ribbon { font-size: 1.2rem; padding: 0.4rem 1.6rem; top: -1.05rem; }
+      .ribbon-tag { font-size: 0.62rem; top: 1.1rem; right: -0.3rem; }
       textarea { min-height: 240px; }
       #reader { font-size: 1rem; }
       .controls { gap: 0.5rem; }
@@ -150,26 +195,27 @@
   </style>
 </head>
 <body>
-  <header>
-    <h1>text to speech</h1>
+  <div class="card">
+    <h1 class="ribbon">text to speech</h1>
+    <span class="ribbon ribbon-tag">free</span>
     <p class="tagline">#auditorylearnercore</p>
-  </header>
 
-  <main>
-    <textarea id="t" placeholder="paste anything in here."></textarea>
-    <div id="reader" hidden></div>
-    <div class="controls">
-      <button id="play">play</button>
-      <button id="pause" disabled>pause</button>
-      <button id="stop" disabled>stop</button>
-      <select id="voice"></select>
-      <label>
-        speed
-        <input id="rate" type="range" min="0.5" max="4" step="0.1" value="1">
-        <span class="rate-num" id="rd">1.0×</span>
-      </label>
-    </div>
-  </main>
+    <main>
+      <textarea id="t" placeholder="paste anything in here."></textarea>
+      <div id="reader" hidden></div>
+      <div class="controls">
+        <button id="play">play</button>
+        <button id="pause" disabled>pause</button>
+        <button id="stop" disabled>stop</button>
+        <select id="voice"></select>
+        <label>
+          speed
+          <input id="rate" type="range" min="0.5" max="4" step="0.1" value="1">
+          <span class="rate-num" id="rd">1.0×</span>
+        </label>
+      </div>
+    </main>
+  </div>
 
   <script>
     const t = document.getElementById('t');
