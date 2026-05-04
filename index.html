@@ -225,7 +225,11 @@
       'Matilda', 'Zoe', 'Lee', 'Eddy', 'Flo', 'Grandma', 'Grandpa', 'Jamie',
       'Reed', 'Rocko', 'Sandy', 'Shelley',
     ]);
-    const stripParens = s => s.replace(/\s*\([^)]*\)/g, '').trim();
+    // strip parenthesized qualifiers, including nested ones like "(English (United Kingdom))"
+    function stripParens(s) {
+      while (s !== (s = s.replace(/\s*\([^()]*\)/g, ''))) {}
+      return s.trim();
+    }
     function quality(v) {
       const base = stripParens(v.name);
       if (PREMIUM_NAMES.has(base)) return 'premium';
