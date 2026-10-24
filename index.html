@@ -331,14 +331,28 @@
       }
     }
 
+    let uiState = 'idle';
     function setState(s) {
+      uiState = s;
       if (s === 'idle')    { play.disabled = false; play.textContent = 'play';   pause.disabled = true;  stop.disabled = true;  t.hidden = false; reader.hidden = true;  }
       if (s === 'playing') { play.disabled = true;  play.textContent = 'play';   pause.disabled = false; stop.disabled = false; t.hidden = true;  reader.hidden = false; }
       if (s === 'paused')  { play.disabled = false; play.textContent = 'resume'; pause.disabled = true;  stop.disabled = false; }
     }
 
-    function speakFrom(wordIdx) {
+    // bumps on every restart/stop so late events from a cancelled utterance get ignored
+    // (if a browser fires onend for the old one after cancel(), the ui flipped back to idle mid-read)
+    let utterGen = 0;
+    // cancel() doesnt clear the paused flag, and chrome ignores resume() once the queue is empty,
+    // so unpause first or the next play/word click thinks its resuming and says nothing
+    function hardCancel() {
+      utterGen++;
+      if (speechSynthesis.paused) speechSynthesis.resume();
       speechSynthesis.cancel();
+    }
+
+    function speakFrom(wordIdx) {
+      hardCancel();
+      const gen = utterGen;
       const startOffset = wordOffsets[wordIdx] || 0;
       const slice = fullText.slice(startOffset);
       const u = new SpeechSynthesisUtterance(slice);
@@ -346,18 +360,20 @@
       if (v) u.voice = v;
       u.rate = parseFloat(rate.value);
       u.onboundary = (e) => {
-        if (e.name !== 'word') return;
+        if (gen !== utterGen || e.name !== 'word') return;
         const before = slice.slice(0, e.charIndex);
         const wordsBefore = (before.match(/\S+/g) || []).length;
         highlight(wordIdx + wordsBefore);
       };
-      u.onend = () => { highlight(-1); setState('idle'); };
+      u.onend = () => { if (gen !== utterGen) return; highlight(-1); setState('idle'); };
       speechSynthesis.speak(u);
+      // still paused (e.g. pause landed right as the last utterance ended)? now theres something to resume
+      if (speechSynthesis.paused) speechSynthesis.resume();
       setState('playing');
     }
 
     play.onclick = () => {
-      if (speechSynthesis.paused) { speechSynthesis.resume(); setState('playing'); return; }
+      if (uiState === 'paused') { speechSynthesis.resume(); setState('playing'); return; }
       fullText = t.value;
       if (!fullText.trim()) return;
       buildReader(fullText);
@@ -365,7 +381,7 @@
     };
 
     pause.onclick = () => { speechSynthesis.pause(); setState('paused'); };
-    stop.onclick  = () => { speechSynthesis.cancel(); highlight(-1); setState('idle'); };
+    stop.onclick  = () => { hardCancel(); highlight(-1); setState('idle'); };
 
     // any user scroll input pauses auto-scroll for 4s, so the page doesnt yank you back
     const markUserScroll = () => { suppressScrollUntil = Date.now() + 4000; };
